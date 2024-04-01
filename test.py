@@ -15,4 +15,7 @@ if __name__=="__main__":
         product = Scraper(url)
         products.append(product.scrape())
 
-    print(products)
+    for product in products:
+        for key, value in product.items():
+            print(key, " : ", value)
+        print("\n")
