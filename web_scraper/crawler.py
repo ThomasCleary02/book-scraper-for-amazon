@@ -1,12 +1,12 @@
-from soup_request import RequestSoup
+from .soup_request import RequestSoup
 
 # create the search url using the search query
-def create_url(string):
+def create_url(string: str):
     url = "https://www.amazon.com/s?k=" + string.replace(" ", "+")
     return url
 
 # method to extract urls from search page
-def crawl(search_query):
+def crawl(search_query: str):
 
     soup = RequestSoup.get(create_url(search_query))
  
