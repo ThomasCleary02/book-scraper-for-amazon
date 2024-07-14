@@ -1,33 +1,32 @@
-# Web Scraper for Amazon Books
+# Amazon Product Data Scraper API
 
-This project is a web scraper designed to search for books on Amazon, extract detailed information about them, and store the information in a MongoDB database.
+This project is an API that provides access to a web scraper designed to search for products on Amazon and extract detailed information about them.
 
 ## Features
 
-- Search for books on Amazon by keyword
-- Extract book details such as title, author, description, ISBN, and cover image
-- Store book information in a MongoDB database
+- Search for products on Amazon by keyword
+- Extract product details such as title, author, description, ISBN, and cover image
 - Asynchronous requests for improved performance
+- RESTful API built with FastAPI
 
 ## Prerequisites
 
 - Python 3.7+
-- MongoDB instance (local or remote)
 
 ## Installation
 
 1. Clone the repository:
 
     ```sh
-    git clone https://github.com/yourusername/web_scraper.git
-    cd web_scraper
+    git clone https://github.com/yourusername/amazon-scraper-api.git
+    cd amazon-scraper-api
     ```
 
 2. Create a virtual environment and activate it:
 
     ```sh
     python -m venv venv
-    source venv/bin/activate
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
     ```
 
 3. Install the required dependencies:
@@ -36,49 +35,54 @@ This project is a web scraper designed to search for books on Amazon, extract de
     pip install -r requirements.txt
     ```
 
-4. Set up the environment variables:
-
-    Create a `.env` file in the root directory of the project and add the following variables:
-
-    ```env
-    MONGO_URI=mongodb://localhost:27017/mydatabase
-    DB_NAME=mydatabase
-    COLLECTION_NAME=mycollection
-    ```
-
-    Adjust the values according to your MongoDB setup.
-
 ## Usage
 
-Run the main script to start scraping:
+Run the FastAPI server:
 
 ```sh
-python main.py
+uvicorn main:app --reload
 ```
 
-The script will search for books with the query "edward steers jr", extract information, and store it in the specified MongoDB collection.
+The API will be available at http://localhost:8000.
+
+## API Endpoints
+
+- POST /search: Search for products and retrieve their details
+
+ - Request body:
+ ```json
+ {
+   "keywords": "string",
+   "num_results": "integer"
+ }
+```
+ - Response: Array of product information objects
+
+## API Documentation
+Once the server is running, you can access the interactive API documentation:
+
+Swagger UI: http://localhost:8000/docs
+ReDoc: http://localhost:8000/redoc
 
 ## Project Structure
 
-- **main.py**: The entry point of the application. Handles the overall flow of scraping and storing book information.
-- **core/crawler.py**: Contains the Crawler class that fetches product links from Amazon search results.
-- **core/scraper.py**: Contains the Scraper class that extracts detailed book information from individual product pages.
-- **core/soup_request.py**: Contains the RequestSoup class that handles HTTP requests and parses responses with BeautifulSoup.
-- **config/mongo.py**: Contains the MongoDB class that manages the connection and operations with the MongoDB database.
+- **main.py**: The entry point of the application. Contains the FastAPI app and endpoint definitions.
+- **core/crawler**.py: Contains the Crawler class that fetches product links from Amazon search results.
+- **core/scraper**.py: Contains the Scraper class that extracts detailed product information from individual product pages.
+- **core/soup_request**.py: Contains the RequestSoup class that handles HTTP requests and parses responses with BeautifulSoup.
 - **utils/helpers.py**: Contains utility functions, including logging setup and URL creation.
 
 ## Dependencies
 
+- fastapi
+- uvicorn
 - aiohttp
 - beautifulsoup4
-- python-dotenv
-- pymongo
-- requests
+- pydantic
 
 ## Contributing
 
 Feel free to fork the repository and submit pull requests. Any enhancements, bug fixes, or suggestions are welcome.
 
 ## License
-
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/git/git-scm.com/blob/main/MIT-LICENSE.txt) file for more details.

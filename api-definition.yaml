@@ -1,0 +1,63 @@
+openapi: 3.0.0
+info:
+  title: Amazon Product Data Scraper API
+  description: An API for scraping product data from Amazon based on search keywords
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+paths:
+  /search:
+    post:
+      summary: Search for products and retrieve their details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:    
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductInfo'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+components:
+  schemas:
+    SearchRequest:
+      type: object
+      required:
+        - keywords
+        - num_results
+      properties:
+        keywords:
+          type: string
+          description: Search keywords for product search
+        num_results:
+          type: integer
+          description: Number of results to return
+          minimum: 1
+    ProductInfo:
+      type: object
+      properties:
+        isbn:
+          type: string
+        title:
+          type: string
+        author:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        url:
+          type: string
+        cover_img:
+          type: string

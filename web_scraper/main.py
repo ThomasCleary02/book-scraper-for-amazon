@@ -1,37 +1,47 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List
 import asyncio
-import logging
-from core.scraper import Scraper
 from core.crawler import Crawler
+from core.scraper import Scraper
 from utils.helpers import setup_logging
-from config.mongo import MongoDB
 
-async def get_books(search_query: str) -> list:
-    book_links = await Crawler.extract_product_links(search_query)
-    books = []
-    for link in book_links:
-        scraper = Scraper(link)
-        book_info = await scraper.get_product_info()
-        books.append(book_info)
-    return books
+app = FastAPI()
 
-async def add_books_to_db(books: list, db: MongoDB):
-    added = 0
-    updated = 0
-    for book in books:
-        result = await db.add_book(book)
-        if result == 1:
-            added += 1
-        elif result == 2:
-            updated += 1
-    return {"added": added, "updated": updated}
+setup_logging()
 
-async def main():
-    setup_logging(logging.INFO)
-    search_query = "edward steers jr"
-    db = MongoDB()  # Initialize the MongoDB instance
-    books = await get_books(search_query)
-    result = await add_books_to_db(books, db)
-    print(result)
+class SearchRequest(BaseModel):
+    keywords: str
+    num_results: int
+
+class ProductInfo(BaseModel):
+    isbn: str
+    title: str
+    author: List[str]
+    description: str
+    url: str
+    cover_img: str
+
+@app.post("/search", response_model=List[ProductInfo])
+async def search_products(request: SearchRequest):
+    if request.num_results <= 0:
+        raise HTTPException(status_code=400, detail="Number of results must be greater than 0")
+    
+    # Get product links
+    product_links = await Crawler.extract_product_links(request.keywords)
+    
+    # Limit the number of links to scrape
+    product_links = product_links[:request.num_results]
+    
+    # Scrape product information
+    tasks = [Scraper(url).get_product_info() for url in product_links]
+    results = await asyncio.gather(*tasks)
+    
+    # Filter out any empty results
+    valid_results = [ProductInfo(**result) for result in results if result]
+    
+    return valid_results
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
