@@ -1,0 +1,274 @@
+openapi: 3.0.0
+info:
+  title: Amazon Book Scraper API
+  description: A production-ready API for scraping book data from Amazon based on search keywords
+  version: 1.0.0
+  contact:
+    name: API Administrator
+    email: admin@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://bookscraperapi-production.up.railway.app
+    description: Production server
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: Health
+    description: Health check and monitoring endpoints
+  - name: Search
+    description: Book search and data extraction endpoints
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health Check
+      description: Check the API service status and health
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '500':
+          description: Service issues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /:
+    get:
+      tags:
+        - Health
+      summary: Root Information
+      description: Get basic API information
+      operationId: getRoot
+      responses:
+        '200':
+          description: API information returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RootResponse'
+
+  /search:
+    post:
+      tags:
+        - Search
+      summary: Search Books
+      description: Search for books on Amazon by keywords and retrieve detailed information
+      operationId: searchBooks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookInfo'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No books found for the given keywords
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '408':
+          description: Request timed out (30 second limit)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error during scraping
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: API key for authentication
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          description: Service health status
+          example: "healthy"
+        timestamp:
+          type: number
+          description: Unix timestamp of the health check
+          example: 1703123456.789
+        version:
+          type: string
+          description: API version
+          example: "1.0.0"
+
+    RootResponse:
+      type: object
+      required:
+        - message
+        - version
+        - status
+      properties:
+        message:
+          type: string
+          description: API message
+          example: "Amazon Product Data Scraper API"
+        version:
+          type: string
+          description: API version
+          example: "1.0.0"
+        status:
+          type: string
+          description: API status
+          example: "running"
+        docs:
+          type: string
+          description: Documentation availability
+          example: "Documentation disabled in production"
+
+    SearchRequest:
+      type: object
+      required:
+        - keywords
+        - num_results
+      properties:
+        keywords:
+          type: string
+          description: Search keywords for book search
+          minLength: 1
+          maxLength: 200
+          example: "python programming"
+        num_results:
+          type: integer
+          description: Number of results to return
+          minimum: 1
+          maximum: 50
+          example: 3
+
+    BookInfo:
+      type: object
+      properties:
+        isbn:
+          type: string
+          description: Amazon ASIN (Amazon Standard Identification Number)
+          example: "B0CSY7BL6Q"
+        title:
+          type: string
+          description: Book title
+          example: "Python Programming for Beginners: The Complete Python Coding Crash Course"
+        author:
+          type: array
+          items:
+            type: string
+          description: Array of author names
+          example: ["codeprowess"]
+        description:
+          type: string
+          description: Book description/summary
+          example: "UPDATED VERSION AUGUST 2025..."
+        url:
+          type: string
+          description: Amazon product page URL
+          example: "https://www.amazon.com/..."
+        cover_img:
+          type: string
+          description: Book cover image URL
+          example: "https://m.media-amazon.com/images/I/517KYcz2AJL._SX342_SY445_.jpg"
+        price:
+          type: string
+          description: Book price (may be missing)
+          example: "$59.95"
+        rating:
+          type: number
+          format: float
+          description: Book rating out of 5 (may be missing)
+          minimum: 0
+          maximum: 5
+          example: 4.5
+        review_count:
+          type: integer
+          description: Number of customer reviews (may be missing)
+          minimum: 0
+          example: 723
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message description
+          example: "Invalid API key"
+
+  examples:
+    SearchRequestExample:
+      summary: Example search request
+      value:
+        keywords: "python programming"
+        num_results: 3
+
+    BookInfoExample:
+      summary: Example book information
+      value:
+        isbn: "B0CSY7BL6Q"
+        title: "Python Programming for Beginners: The Complete Python Coding Crash Course"
+        author: ["codeprowess"]
+        description: "UPDATED VERSION AUGUST 2025..."
+        url: "https://www.amazon.com/..."
+        cover_img: "https://m.media-amazon.com/images/I/517KYcz2AJL._SX342_SY445_.jpg"
+        price: "$59.95"
+        rating: 4.5
+        review_count: 723
+
+    ErrorResponseExample:
+      summary: Example error response
+      value:
+        detail: "Invalid API key"

@@ -1,6 +1,6 @@
 import re
 import logging
-from core.soup_request import RequestSoup
+from web_scraper.core.soup_request import RequestSoup
 
 class Scraper:
     
@@ -18,13 +18,17 @@ class Scraper:
         await self.fetch_soup()
         if not self.soup:
             return {}
+        
         product_info = {
             "isbn": self.get_isbn(),
             "title": self.get_title(),
             "author": self.get_authors(),
             "description": self.get_desc(),
             "url": self.url,
-            "cover_img": self.get_image()
+            "cover_img": self.get_image(),
+            "price": self.get_price(),
+            "rating": self.get_rating(),
+            "review_count": self.get_review_count()
         }
         return product_info
 
@@ -37,16 +41,61 @@ class Scraper:
             logging.error("Title not found")
             return ""
 
-    def get_rating(self) -> str:
-        return self.extract_text_with_fallback([
-            ('i', {'class': 'a-icon a-icon-star a-star-4-5'}), 
-            ('span', {'class': 'a-icon-alt'})
-        ])
+    def get_rating(self) -> float:
+        try:
+            # Extract rating from star display
+            rating_element = self.soup.find('i', {'class': 'a-icon-star'})
+            if rating_element:
+                rating_text = rating_element.get('class', [])
+                for class_name in rating_text:
+                    if 'a-star-' in class_name:
+                        # Extract rating like "4-5" and convert to float
+                        rating_match = re.search(r'a-star-(\d+)-(\d+)', class_name)
+                        if rating_match:
+                            whole = int(rating_match.group(1))
+                            fraction = int(rating_match.group(2))
+                            return whole + (fraction / 10.0)
+            
+            return None
+        except Exception as e:
+            logging.error(f"Error extracting rating: {e}")
+            return None
 
-    def get_review_count(self) -> str:
-        return self.extract_text_with_fallback([
-            ('span', {'id': 'acrCustomerReviewText'})
-        ])
+    def get_review_count(self) -> int:
+        try:
+            # Extract review count
+            review_element = self.soup.find('span', {'id': 'acrCustomerReviewText'})
+            if review_element:
+                review_text = review_element.get_text()
+                # Extract number from text like "1,234 customer reviews"
+                review_match = re.search(r'(\d+(?:,\d+)*)', review_text)
+                if review_match:
+                    return int(review_match.group(1).replace(',', ''))
+            return None
+        except Exception as e:
+            logging.error(f"Error extracting review count: {e}")
+            return None
+
+    def get_price(self) -> str:
+        try:
+            # Try multiple price selectors for different page layouts
+            price_selectors = [
+                ('span', {'class': 'a-price-whole'}),
+                ('span', {'class': 'a-offscreen'}),
+                ('span', {'class': 'a-price a-text-price'})
+            ]
+            
+            for tag, attrs in price_selectors:
+                element = self.soup.find(tag, attrs=attrs)
+                if element:
+                    price_text = element.get_text().strip()
+                    if price_text and '$' in price_text:
+                        return price_text
+            
+            return ""
+        except Exception as e:
+            logging.error(f"Error extracting price: {e}")
+            return ""
 
     def extract_text_with_fallback(self, selectors: list) -> str:
         for tag, attrs in selectors:
