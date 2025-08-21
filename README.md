@@ -41,24 +41,24 @@ This project is provided for **EDUCATIONAL AND RESEARCH PURPOSES ONLY**.
 
 ## 🔧 Installation
 
-1. Clone the repository:
+1. **Clone the repository:**
     ```sh
     git clone https://github.com/yourusername/amazon-scraper-api.git
     cd amazon-scraper-api
     ```
 
-2. Create a virtual environment:
+2. **Create a virtual environment:**
     ```sh
     python -m venv venv
     source venv/bin/activate  # On Windows use `venv\Scripts\activate`
     ```
 
-3. Install dependencies:
+3. **Install dependencies:**
     ```sh
     pip install -r requirements.txt
     ```
 
-4. Set up environment variables:
+4. **Set up environment variables:**
     ```sh
     cp .env.example .env
     # Edit .env with your configuration
