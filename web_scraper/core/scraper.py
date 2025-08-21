@@ -1,6 +1,6 @@
 import re
 import logging
-from core.soup_request import RequestSoup
+from web_scraper.core.soup_request import RequestSoup
 
 class Scraper:
     
@@ -76,6 +76,27 @@ class Scraper:
             logging.error(f"Error extracting review count: {e}")
             return None
 
+    def get_price(self) -> str:
+        try:
+            # Try multiple price selectors for different page layouts
+            price_selectors = [
+                ('span', {'class': 'a-price-whole'}),
+                ('span', {'class': 'a-offscreen'}),
+                ('span', {'class': 'a-price a-text-price'})
+            ]
+            
+            for tag, attrs in price_selectors:
+                element = self.soup.find(tag, attrs=attrs)
+                if element:
+                    price_text = element.get_text().strip()
+                    if price_text and '$' in price_text:
+                        return price_text
+            
+            return ""
+        except Exception as e:
+            logging.error(f"Error extracting price: {e}")
+            return ""
+
     def extract_text_with_fallback(self, selectors: list) -> str:
         for tag, attrs in selectors:
             try:
@@ -122,24 +143,3 @@ class Scraper:
             logging.error("Image not found")
             image_url = ""
         return image_url
-
-    def get_price(self) -> str:
-        try:
-            # Try multiple price selectors for different page layouts
-            price_selectors = [
-                ('span', {'class': 'a-price-whole'}),
-                ('span', {'class': 'a-offscreen'}),
-                ('span', {'class': 'a-price a-text-price'})
-            ]
-            
-            for tag, attrs in price_selectors:
-                element = self.soup.find(tag, attrs=attrs)
-                if element:
-                    price_text = element.get_text().strip()
-                    if price_text and '$' in price_text:
-                        return price_text
-            
-            return ""
-        except Exception as e:
-            logging.error(f"Error extracting price: {e}")
-            return ""

@@ -1,6 +1,6 @@
 import logging
-from utils.helpers import create_search_url
-from core.soup_request import RequestSoup
+from web_scraper.utils.helpers import create_search_url
+from web_scraper.core.soup_request import RequestSoup
 
 class Crawler:
     @staticmethod
